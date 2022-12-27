@@ -401,12 +401,6 @@ ___ PROCEDURE .LineItemMerge ___________________________________________________
 Global Return_To, New_Master_Record, New_Master_CNum, DedupWindow,
     Seeds_Merged, Seeds_Hist1, Seeds_Hist2, Seeds_Rec1, Seeds_Rec2, Seeds_Done
 
-find IsDestinationRecord="Yes"
-if (not info("found"))
-    message "No Record is labed as destination record. Procedure will stop."
-    stop
-endif
-
 
 DedupWindow=info("databasename")
 New_Master_Record=0
@@ -415,18 +409,6 @@ Seeds_Merged=0
 Seeds_Rec1=""
 Seeds_Rec2=""
 New_Master_CNum=0
-
-
-Field Con
-    loop
-        ;if «»=""
-            find IsDestinationRecord="Yes"
-            copy
-            lastrecord
-            paste
-        ;endif
-        right
-    until info("stopped") or info("fieldname")="Updated"
 
 
 //_____Number all Records____
@@ -954,21 +936,75 @@ message ProcedureList //messages which procedures got changed
 ___ ENDPROCEDURE ImportMacros __________________________________________________
 
 ___ PROCEDURE .TestMath ________________________________________________________
-lastrecord
-field «MostRecentEntered»
-maximum
-    case «»=0
-        nop
-    defaultcase
-        if val(«C#») < 1
-            openfile "Customer#"
-            call "newnumber"
-            window DedupWindow
-            field «C#»
+Global Return_To, New_Master_Record, New_Master_CNum, DedupWindow,
+    Seeds_Merged, Seeds_Hist1, Seeds_Hist2, Seeds_Rec1, Seeds_Rec2, Seeds_Done
+
+
+DedupWindow=info("databasename")
+New_Master_Record=0
+Return_To=0
+Seeds_Merged=0
+Seeds_Rec1=""
+Seeds_Rec2=""
+New_Master_CNum=0
+
+
+Field Con
+    loop
+        ;if «»=""
+            find IsDestinationRecord="Yes"
+            copy
+            lastrecord
             paste
-        endif 
-    endcase
+        ;endif
+        right
+    until info("stopped") or info("fieldname")="EntrySequence"
     
+    DEBUG
+
+
+//_____Number all Records____
+    field «CountSequence»
+    lastrecord
+    togglesummarylevel
+    firstrecord
+    sequence "1"
+    lastrecord
+    togglesummarylevel
+    
+
+//__get MergeNumber for CustomerHistory
+lastrecord
+if info("summary")>0
+    New_Master_CNum=«C#»
+    New_Master_Record=«CountSequence»
+endif
+
+///____Begin Cycle____
+ global Seeds_Merged, Seeds_Hist1,
+        Trees_Merged, Trees_Hist1,
+        OGS_Merged, OGS_Hist1,
+        Moose_Merged, Moose_Hist1,
+        Bulbs_Merged, Bulbs_Hist1
+
+
+//____Seeds Merge_____
+    Seeds_Merged=""
+    Seeds_Hist1=""
+
+    firstrecord 
+
+    loop
+    if info("summary")<1
+        Seeds_Hist1=«SeedsHistory»
+        arrayfilter Seeds_Hist1, Seeds_Merged, ",", val(import())+val(array(Seeds_Merged, seq(), ","))
+        ////displaydata Seeds_Merged
+    endif
+    downrecord
+
+    until info("summary")>0
+
+    SeedsHistory=Seeds_Merged
 ___ ENDPROCEDURE .TestMath _____________________________________________________
 
 ___ PROCEDURE .MergeToHistory __________________________________________________
@@ -1330,7 +1366,6 @@ else
     nop
 endif 
 
-
 ___ ENDPROCEDURE .CodeTest _____________________________________________________
 
 ___ PROCEDURE .MergeSummaryTo __________________________________________________
@@ -1392,3 +1427,40 @@ if info("found")
 endif
 
 ___ ENDPROCEDURE BusinessRecord/8 ______________________________________________
+
+___ PROCEDURE .MergeSingle _____________________________________________________
+find IsDestinationRecord="Yes"
+if (not info("found"))
+    message "No Record is labed as destination record. Procedure will stop."
+    stop
+endif
+
+global check_dest_num
+check_dest_num=""
+arraybuild check_dest_num, ¶,"", IsDestinationRecord
+;displaydata check_dest_num
+check_dest_num=arraystrip(check_dest_num, ¶)
+;displaydata check_dest_num
+if arraysize(check_dest_num, ¶)>1
+goto MultiMerge
+endif
+
+
+Field Con
+    loop
+        ;if «»=""
+            find IsDestinationRecord="Yes"
+            copy
+            lastrecord
+            paste
+        ;endif
+        right
+    until info("stopped") or info("fieldname")="EntrySequence"
+    goto Skip
+   
+   
+   MultiMerge:
+   message "You are not supposed to use this function for merging two destination records. Procedure will stop."
+   
+   Skip:
+___ ENDPROCEDURE .MergeSingle __________________________________________________
