@@ -18,6 +18,8 @@ endif
 showvariables list_of_records
 
 opensheet
+
+selectall
 ___ ENDPROCEDURE .Initialize ___________________________________________________
 
 ___ PROCEDURE AutoSort/1 _______________________________________________________
@@ -48,7 +50,7 @@ Global Deduplicate_Selected_Array, Update_Weight, Last_Order_Weight, Was_Online,
 
 selectwithin striptoalpha(exportline())≠""
 removeunselected
-
+/*
 if count_runs<2
 displaydata "This Procedure will put the record it guesses to have the most recent information as the first record, then gives you options for merging records. (Note: It may also put an older record higher if the customer has given a legal address for patronage dividends)
 
@@ -60,6 +62,7 @@ All merged records that do not go back into the Mailing list or Customer history
 
 This message will come up the first time you run this procedure after closing the file, but shouldn't come up after using CMD-1 during this session."
 endif 
+*/
 
 
 ///___was most recently updated
@@ -122,6 +125,7 @@ selectall
     
     if (not info("empty"))
         field «MostRecentEntered»
+        select info("summary")<1
         sortdown
         
             firstrecord
@@ -145,7 +149,7 @@ selectall
 selectall
 
 //fix this not resetting the numbers back if run again
-    debug
+  ;  debug
 field ConsentWeight
     formulafill «»*has_consent
 
@@ -157,7 +161,7 @@ field OnlineWeight
 field HowLikelyWeight
 formulafill ConsentWeight+EnteredWeight+«UpdateWeight»+InqWeight
 
-debug ///_______________________
+;debug ///_______________________
 call .Maximum
 
 field HowLikelyWeight
@@ -208,7 +212,7 @@ removeallsummaries
 
 selectwithin score_range contains str(HowLikelyWeight)
 if (not info("empty"))
-    bigmessage "Scores are really close on this one. Please merge by hand."
+    bigmessage "Scores are really close on this one. Please double check before merging."
     goto CheckGroup
 endif
 
@@ -216,15 +220,20 @@ selectwithin str(HowLikelyWeight) contains str(max_score)
 
 if (not info("empty"))
     case info("selected")>1
-    message "Scores are really close on this one. Please merge by hand."
+    message "Scores are really close on this one. Please double check before merging."
     endcase
 endif
+
+select Flagged≠""
+    if (not info("empty"))
+        message "one of these records has a redflag and these should be audited by the user."
+     endif
 
 
 CheckGroup:
 selectall
 
-debug
+;debug
 Field «Group»
     emptyfill "No Group"
     arraybuild compare_records, ¶, "", «»
@@ -313,13 +322,15 @@ select info("summary")<1
 global list_of_records, record_count
 record_count=info("selected")
 //____Makes a readable, stackable display for the user on the ChooseDestination form_____//
-arrayselectedbuild list_of_records, ¶,"",arrayrange(exportline(),1, 7,¬)+¶+arrayrange(exportline(),15, 20,¬)+¶+
+arrayselectedbuild list_of_records, ¶,"",?(Flagged≠"", "RedFlagged!!!! Check Closely"+¶,"")+arrayrange(exportline(),1, 7,¬)+¶+arrayrange(exportline(),15, 20,¬)+¶+
 "Last Entered Sale: Seeds:"+str(LastSeeds)+¬+" Trees:"+str(LastTrees)+" OGS:"+str(LastNewOGS)+" Bulbs:"+str(LastBulbs)+¶+
 "______________________________~"
 
 arrayfilter list_of_records, list_of_records, "~",
 ?(seq()=1,"Record "+str(seq())+":     "+¶+import(),
         ?(seq()≤info("selected"),¶+"Record "+str(seq())+":     "+import(),""))
+        
+        displaydata list_of_records
 
 //________Makes everything update for the form______
             
@@ -359,6 +370,8 @@ IsDestinationRecord="Yes"
 
 auto_merge_record=exportline()
 lastrecord
+//loop 
+
 
 call .LineItemMerge
     
@@ -409,23 +422,6 @@ Seeds_Rec2=""
 New_Master_CNum=0
 
 
-//_____Number all Records____
-    field «CountSequence»
-    lastrecord
-    togglesummarylevel
-    firstrecord
-    sequence "1"
-    lastrecord
-    togglesummarylevel
-    
-
-//__get MergeNumber for CustomerHistory
-lastrecord
-if info("summary")>0
-    New_Master_CNum=«C#»
-    New_Master_Record=«CountSequence»
-endif
-
 ///____Begin Cycle____
  global Seeds_Merged, Seeds_Hist1,
         Trees_Merged, Trees_Hist1,
@@ -433,7 +429,7 @@ endif
         Moose_Merged, Moose_Hist1,
         Bulbs_Merged, Bulbs_Hist1
 
-        
+
 
 
 //____Seeds Merge_____
@@ -445,7 +441,7 @@ endif
     loop
     if info("summary")<1
         Seeds_Hist1=«SeedsHistory»
-        arrayfilter Seeds_Hist1, Seeds_Merged, ",", val(import())+val(array(Seeds_Merged, seq(), ","))
+        arrayfilter Seeds_Hist1, Seeds_Merged, ",", pattern(val(import())+val(array(Seeds_Merged, seq(), ",")),"#.##")
         ////displaydata Seeds_Merged
     endif
     downrecord
@@ -463,7 +459,7 @@ endif
     loop
     if info("summary")<1
         Trees_Hist1=«TreesHistory»
-        arrayfilter Trees_Hist1, Trees_Merged, ",", val(import())+val(array(Trees_Merged, seq(), ","))
+        arrayfilter Trees_Hist1, Trees_Merged, ",", pattern(val(import())+val(array(Trees_Merged, seq(), ",")),"#.##")
         ////displaydata Trees_Merged
     endif
     downrecord
@@ -481,7 +477,7 @@ endif
     loop
     if info("summary")<1
         Bulbs_Hist1=«BulbsHistory»
-        arrayfilter Bulbs_Hist1, Bulbs_Merged, ",", val(import())+val(array(Bulbs_Merged, seq(), ","))
+        arrayfilter Bulbs_Hist1, Bulbs_Merged, ",", pattern(val(import())+val(array(Bulbs_Merged, seq(), ",")),"#.##")
         ////displaydata Bulbs_Merged
     endif
     downrecord
@@ -499,7 +495,7 @@ endif
     loop
     if info("summary")<1
         OGS_Hist1=«OGSHistory»
-        arrayfilter OGS_Hist1, OGS_Merged, ",", val(import())+val(array(OGS_Merged, seq(), ","))
+        arrayfilter OGS_Hist1, OGS_Merged, ",", pattern(val(import())+val(array(OGS_Merged, seq(), ",")),"#.##")
         ////displaydata OGS_Merged
     endif
     downrecord
@@ -517,7 +513,7 @@ endif
     loop
     if info("summary")<1
         Moose_Hist1=«MooseHistory»
-        arrayfilter Moose_Hist1, Moose_Merged, ",", val(import())+val(array(Moose_Merged, seq(), ","))
+        arrayfilter Moose_Hist1, Moose_Merged, ",", pattern(val(import())+val(array(Moose_Merged, seq(), ",")),"#.##")
         ////displaydata Moose_Merged
     endif
     downrecord
@@ -546,8 +542,7 @@ else
 stop
 endif
 
-lastrecord
-togglesummarylevel
+call .MergeSingle
 
 ___ ENDPROCEDURE ChooseMergeRecord/4 ___________________________________________
 
@@ -604,6 +599,8 @@ default_moose=rep(chr(44), arraysize(lineitemarray(MΩ, ","),",")-1)
 default_bulbs=rep(chr(44), arraysize(lineitemarray(BfΩ, ","),",")-1)
 
 ///____If we don't have a matching customer_history Record, set everything to zero____//
+//____They got a number? And we find it, skip past the cases__//
+//___They don't got a number, set everything to zero_____//
 case reference_num > 0
     find «C#»=reference_num
         if (not info("found"))
@@ -615,7 +612,11 @@ case reference_num > 0
                 LastTrees=0
                 HasConsent=0
                 most_recent_year="0"
+                HasHistory="No"
                 goto FillHistories
+        else
+             window Dedup_form
+            HasHistory="Yes"
         endif
 defaultcase
     window Dedup_form
@@ -626,6 +627,7 @@ defaultcase
             LastTrees=0
             HasConsent=0
             most_recent_year="0"
+            HasHistory="No"
             goto FillHistories
 endcase
 
@@ -825,6 +827,7 @@ FillHistories:
 window Dedup_form
 
 opensheet
+«Flagged»=?(RedFlag≠"","User Audit Needed","")
 «MostRecentEntered»=val(most_recent_year)
 LastBulbs=val(Seeds_Num)
 LastNewOGS=val(Moose_Num)
@@ -892,13 +895,79 @@ removeunselected
 endif
 ___ ENDPROCEDURE FindMostRecent ________________________________________________
 
-___ PROCEDURE AddDate __________________________________________________________
-InqCodeNum=?(val(striptonum(inqcode))<30, val(striptonum(inqcode)), val(striptonum(inqcode)[3,4]))
-___ ENDPROCEDURE AddDate _______________________________________________________
+___ PROCEDURE .ArchiveOldInfo __________________________________________________
+if info("windows") notcontains "DedupArchive"
+    message "Please Open the DedupArchive File when doing deduplications. Procedure will stop. "
+    stop
+endif
 
-___ PROCEDURE Search Address ___________________________________________________
 
-___ ENDPROCEDURE Search Address ________________________________________________
+fileglobal address_main, old_addresses_array, c_num_main, old_cnum_array
+
+address_main=""
+old_addresses_array=""
+c_num_main=""
+old_cnum_array=""
+
+lastrecord
+c_num_main=str(«C#»)
+address_main=MAd+¬+St+¬+str(pattern(val(Zip),"#####"))
+
+firstrecord
+select info("summary")<1
+loop 
+ if MAd+¬+St+¬+str(pattern(val(Zip),"#####")) notcontains address_main
+ old_addresses_array=MAd+¬+St+¬+str(pattern(val(Zip),"#####"))+¶+old_addresses_array
+ endif
+ if str(«C#») notcontains c_num_main
+  old_cnum_array=str(«C#»)+¶+old_cnum_array
+ endif
+ if «IsDestinationRecord»≠"Yes"
+  «MergedWith»=c_num_main
+  endif
+  
+ downrecord
+  
+ 
+ until info("stopped")
+ 
+ selectall
+ lastrecord
+
+old_addresses_array=arraystrip(old_addresses_array, ¶)
+old_cnum_array=arraystrip(old_cnum_array, ¶)
+
+;displaydata old_addresses_array
+
+OldAddresses=old_addresses_array
+OldCNums=old_cnum_array
+
+field MergedOn
+formulafill datepattern(today(), "mm/dd/yy")
+
+firstrecord
+select info("summary")<1
+loop
+openfile "Deduplicator"
+
+if IsDestinationRecord≠"Yes" 
+copyrecord
+
+openfile "DedupArchive"
+pasterecord
+endif
+openfile "Deduplicator"
+downrecord
+until info("stopped")
+
+message "Archived!"
+
+selectall
+
+
+
+
+___ ENDPROCEDURE .ArchiveOldInfo _______________________________________________
 
 ___ PROCEDURE MergeToMostRecent ________________________________________________
 
@@ -942,75 +1011,11 @@ message ProcedureList //messages which procedures got changed
 ___ ENDPROCEDURE ImportMacros __________________________________________________
 
 ___ PROCEDURE .TestMath ________________________________________________________
-Global Return_To, New_Master_Record, New_Master_CNum, DedupWindow,
-    Seeds_Merged, Seeds_Hist1, Seeds_Hist2, Seeds_Rec1, Seeds_Rec2, Seeds_Done
+global test_size_1
 
+test_size_1= arraysize(«», ",")
 
-DedupWindow=info("databasename")
-New_Master_Record=0
-Return_To=0
-Seeds_Merged=0
-Seeds_Rec1=""
-Seeds_Rec2=""
-New_Master_CNum=0
-
-
-Field Con
-    loop
-        ;if «»=""
-            find IsDestinationRecord="Yes"
-            copy
-            lastrecord
-            paste
-        ;endif
-        right
-    until info("stopped") or info("fieldname")="EntrySequence"
-    
-    DEBUG
-
-
-//_____Number all Records____
-    field «CountSequence»
-    lastrecord
-    togglesummarylevel
-    firstrecord
-    sequence "1"
-    lastrecord
-    togglesummarylevel
-    
-
-//__get MergeNumber for CustomerHistory
-lastrecord
-if info("summary")>0
-    New_Master_CNum=«C#»
-    New_Master_Record=«CountSequence»
-endif
-
-///____Begin Cycle____
- global Seeds_Merged, Seeds_Hist1,
-        Trees_Merged, Trees_Hist1,
-        OGS_Merged, OGS_Hist1,
-        Moose_Merged, Moose_Hist1,
-        Bulbs_Merged, Bulbs_Hist1
-
-
-//____Seeds Merge_____
-    Seeds_Merged=""
-    Seeds_Hist1=""
-
-    firstrecord 
-
-    loop
-    if info("summary")<1
-        Seeds_Hist1=«SeedsHistory»
-        arrayfilter Seeds_Hist1, Seeds_Merged, ",", val(import())+val(array(Seeds_Merged, seq(), ","))
-        ////displaydata Seeds_Merged
-    endif
-    downrecord
-
-    until info("summary")>0
-
-    SeedsHistory=Seeds_Merged
+displaydata test_size_1
 ___ ENDPROCEDURE .TestMath _____________________________________________________
 
 ___ PROCEDURE .MergeToHistory __________________________________________________
@@ -1462,11 +1467,14 @@ Field Con
         ;endif
         right
     until info("stopped") or info("fieldname")="EntrySequence"
-    goto Skip
+    goto LineItem
    
    
    MultiMerge:
    message "You are not supposed to use this function for merging two destination records. Procedure will stop."
    
-   Skip:
+   LineItem:
+   call .LineItemMerge
+   
+   
 ___ ENDPROCEDURE .MergeSingle __________________________________________________
