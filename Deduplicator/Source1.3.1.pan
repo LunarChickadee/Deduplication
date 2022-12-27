@@ -149,7 +149,7 @@ selectall
 selectall
 
 //fix this not resetting the numbers back if run again
-  ;  debug
+;  debug
 field ConsentWeight
     formulafill «»*has_consent
 
@@ -227,7 +227,7 @@ endif
 select Flagged≠""
     if (not info("empty"))
         message "one of these records has a redflag and these should be audited by the user."
-     endif
+    endif
 
 
 CheckGroup:
@@ -272,25 +272,27 @@ lowest_code=""
     arraybuild compare_records, ¶, "", «»
     arraydeduplicate compare_records, compare_records, ¶
     
-    if linecount(compare_records)=1
+    if (info("fieldname")≠"Group" AND info("fieldname")≠"RedFlag") AND linecount(compare_records)=1
     «»=compare_records
     endif
     right
-    until info("fieldname")="Updated"
+    until info("fieldname")="EntrySequence"
 
     ;displaydata "All Fields that were identical or had holes in the data have been added to a new merge Record (summary record)."+¶+¶+"You may manually choose which parts to move and/or use:"+¶+¶+"CMD+2 to Choose the topmost record as the new 'master record' it will inherit the oldest C# and codes"+¶+"or"+¶+"us CMD+3 or click a selection in the ChooseDesination Form to merge to that selected record."
 
 call .BuildChoiceList   
 
 selectall
-    debug
+
+field «C#»
 
 /*
     //__make it it's own record
     lastrecord
     togglesummarylevel
 */
-debug 
+
+
 
 
 
@@ -374,31 +376,8 @@ lastrecord
 //loop 
 
 
-call .LineItemMerge
+call .MergeSingle
     
-///___code should merge all the line item stuff, then make the top record be the new merge record with proper numbers
-
-field SeedsHistory
-
-loop
-move_history_up=«»
-firstrecord
-«»=move_history_up
-right
-lastrecord
-until info("fieldname") = "CountSequence"
-
-firstrecord 
-«Code»=lowest_code
-
-«OldCNums»=«C#»
-
-«C#»=lowest_Cust_Num
-
-lastrecord
-deleterecord
-firstrecord
-togglesummarylevel
 
 
 
@@ -424,7 +403,7 @@ New_Master_CNum=0
 
 
 ///____Begin Cycle____
- global Seeds_Merged, Seeds_Hist1,
+global Seeds_Merged, Seeds_Hist1,
         Trees_Merged, Trees_Hist1,
         OGS_Merged, OGS_Hist1,
         Moose_Merged, Moose_Hist1,
@@ -618,7 +597,7 @@ case reference_num > 0
                 HasHistory="No"
                 goto FillHistories
         else
-             window Dedup_form
+            window Dedup_form
             HasHistory="Yes"
         endif
 defaultcase
@@ -919,23 +898,23 @@ address_main=MAd+¬+St+¬+str(pattern(val(Zip),"#####"))
 firstrecord
 select info("summary")<1
 loop 
- if MAd+¬+St+¬+str(pattern(val(Zip),"#####")) notcontains address_main
- old_addresses_array=MAd+¬+St+¬+str(pattern(val(Zip),"#####"))+¶+old_addresses_array
- endif
- if str(«C#») notcontains c_num_main
-  old_cnum_array=str(«C#»)+¶+old_cnum_array
- endif
- if «IsDestinationRecord»≠"Yes"
-  «MergedWith»=c_num_main
-  endif
-  
- downrecord
-  
- 
- until info("stopped")
- 
- selectall
- lastrecord
+if MAd+¬+St+¬+str(pattern(val(Zip),"#####")) notcontains address_main
+old_addresses_array=MAd+¬+St+¬+str(pattern(val(Zip),"#####"))+¶+old_addresses_array
+endif
+if str(«C#») notcontains c_num_main
+old_cnum_array=str(«C#»)+¶+old_cnum_array
+endif
+if «IsDestinationRecord»≠"Yes"
+«MergedWith»=c_num_main
+endif
+
+downrecord
+
+
+until info("stopped")
+
+selectall
+lastrecord
 
 old_addresses_array=arraystrip(old_addresses_array, ¶)
 old_cnum_array=arraystrip(old_cnum_array, ¶)
@@ -1232,7 +1211,7 @@ ___ ENDPROCEDURE MergeMasterRecord _____________________________________________
 
 ___ PROCEDURE .MergeHistory ____________________________________________________
 ///____Begin Cycle____
- global Seeds_Merged, Seeds_Hist1,
+global Seeds_Merged, Seeds_Hist1,
         Trees_Merged, Trees_Hist1,
         OGS_Merged, OGS_Hist1,
         Moose_Merged, Moose_Hist1,
@@ -1331,54 +1310,20 @@ ___ PROCEDURE .MergeHistory ____________________________________________________
 ___ ENDPROCEDURE .MergeHistory _________________________________________________
 
 ___ PROCEDURE .CodeTest ________________________________________________________
-MergeRecordsTree:
+lastrecord
+compare_field=info("fieldname")
+    arraybuild compare_records, ¶, "", «»
+    arraydeduplicate compare_records, compare_records, ¶
+message linecount(compare_records)
 
-select IsAMergeRecord contains "Yes" OR IsDestinationRecord contains "Yes"
+message (info("fieldname")≠"Group" OR info("fieldname")≠"RedFlag")
+message (info("fieldname")≠"Group" XOR info("fieldname")≠"RedFlag")
+MESSAGE (info("fieldname")≠"Group" AND info("fieldname")≠"RedFlag") 
 
-case info("selected")=2
-//merge summary history with the single selected non-summary record
-goto MoveToSingle
-
-case info("selected")=3
-//merge with group and non group as two records
-yesno "Are you merging these as two separate accounts? One personal, and one group?"
-//check if one is a member? 
-
-case info("selected")=1
-//summary is the merge record
-endcase
-
-
-MoveToSingle:
-
-    global move_history_up
-    move_history_up=""
-
-    field SeedsHistory
-
-    loop
-    find IsAMergeRecord="Yes"
-    move_history_up=«»
-    find IsDestinationRecord="Yes"
-    «»=move_history_up
+    if (info("fieldname")≠"Group" AND info("fieldname")≠"RedFlag") and linecount(compare_records)=1
+    «»=compare_records
+    endif
     right
-    until info("fieldname") = "CountSequence"
-
-    find IsAMergeRecord="Yes"
-    «Code»=lowest_code
-
-    «OldCNums»=«C#»
-
-    «C#»=lowest_Cust_Num
-
-if info("selected")=2
-    lastrecord
-    deleterecord
-    firstrecord
-    togglesummarylevel
-else
-    nop
-endif 
 
 ___ ENDPROCEDURE .CodeTest _____________________________________________________
 
@@ -1459,7 +1404,6 @@ if arraysize(check_dest_num, ¶)>1
 goto MultiMerge
 endif
 
-
 Field Con
     loop
         if info("fieldname")=Code
@@ -1469,21 +1413,25 @@ Field Con
             copy
             lastrecord
             paste
-        
+            right
     until info("stopped") or info("fieldname")="EntrySequence"
     goto LineItem
-   
-   
-   MultiMerge:
-   message "You are not supposed to use this function for merging two destination records. Procedure will stop."
-   stop
-   
-   LineItem:
-   call .LineItemMerge
-   
-   call .ArchiveOldInfo
-   
-   
+
+
+MultiMerge:
+message "You are not supposed to use this function for merging two destination records. Procedure will stop."
+stop
+
+LineItem:
+call .LineItemMerge
+
+call .ArchiveOldInfo
+
+field «C#»
+
+lastrecord
+
+
 ___ ENDPROCEDURE .MergeSingle __________________________________________________
 
 ___ PROCEDURE .fineEdit ________________________________________________________
