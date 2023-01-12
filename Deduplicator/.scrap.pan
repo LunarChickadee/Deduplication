@@ -1,56 +1,41 @@
-window "customer_history"
+«Field Name»=array(design_line,#,¬)
+«Type»=array(design_line,#,¬)
+«Digits»=array(design_line,#,¬)
+«Align»=array(design_line,#,¬)
+«Output Pattern»=array(design_line,#,¬)
+«Input Pattern»=array(design_line,#,¬)
+«Range»=array(design_line,#,¬)
+«Choices»=array(design_line,#,¬)
+«Link»=array(design_line,#,¬)
+«Clairvoyance»=array(design_line,#,¬)
+«Tabs»=array(design_line,#,¬)
+«Caps»=array(design_line,#,¬)
+«Dups»=array(design_line,#,¬)
+«Default Value»=array(design_line,#,¬)
+«Equation»=array(design_line,#,¬)
+«Read»=array(design_line,#,¬)
+«Write»=array(design_line,#,¬)
+«Width»=array(design_line,#,¬)
+«Notes»=array(design_line,#,¬)
 
-global c_h_extras, extras_data, extras_counter, fence_post1
+arrayfilter arrayto, arrayto, ¶, ?(import() contains "#", replace(import(),"#",str(seq())), "")
 
-c_h_extras=""
-extras_data=""
-extras_counter=1
-fence_post1=0
-
-c_h_extras="2ndAdd
-CChistory
-Consent
-Dup?
-Email
-Equity
-Facil1
-Facil2
-NewMember
-Notified
-OldMember
-ProbCust
-SpareText4
-SpareText5
-taxname
-TIN"
-
-fence_post1=arraysize(c_h_extras, ¶)
-
-;displaydata c_h_extras
-
-/*
-///____method to fix datatypes____
-global numeric_types
-
-numeric_types=fieldtypes("")
-
-arrayfilter numeric_types, numeric_types, ¶, ?(import() contains "numeric", import(), "")
-
-displaydata numeric_types
-*/
-
-
-extras_data=«2ndAdd»+¶+«CChistory»+¶+«Consent»+¶+«Dup?»+¶+«Email»+¶+
-            str(«Equity»)+¶+«Facil1»+¶+«Facil2»+¶+«NewMember»+¶+«Notified»+¶+
-            «OldMember»+¶+«ProbCust»+¶+«SpareText4»+¶+«SpareText5»+¶+«taxname»+¶+«TIN»
-
-;displaydata extras_data
-
-window "DeDuplicator"
-
-loop
-field (array(c_h_extras, extras_counter, ¶))
-«»=array(extras_data, extras_counter, ¶)
-extras_counter=extras_counter+1
-until extras_counter=17
-
+«Field Name»=array(design_line,1,¬)
+«Type»=array(design_line,2,¬)
+«Digits»=array(design_line,3,¬)
+«Align»=array(design_line,4,¬)
+«Output Pattern»=array(design_line,5,¬)
+«Input Pattern»=array(design_line,6,¬)
+«Range»=array(design_line,7,¬)
+«Choices»=array(design_line,8,¬)
+«Link»=array(design_line,9,¬)
+«Clairvoyance»=array(design_line,10,¬)
+«Tabs»=array(design_line,11,¬)
+«Caps»=array(design_line,12,¬)
+«Dups»=array(design_line,13,¬)
+«Default Value»=array(design_line,14,¬)
+«Equation»=array(design_line,15,¬)
+«Read»=array(design_line,16,¬)
+«Write»=array(design_line,17,¬)
+«Width»=array(design_line,18,¬)
+«Notes»=array(design_line,19,¬)
