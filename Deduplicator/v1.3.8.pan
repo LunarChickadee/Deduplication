@@ -382,7 +382,9 @@ record_count=info("selected")
 //____Makes a readable, stackable display for the user on the ChooseDestination form_____//
 arrayselectedbuild list_of_records, ¶,"","Score: "+str(HowLikelyWeight)+?(info("summary")>0, ¶+"This is the current merge record:"+¶,"")+¶
 +?(Flagged≠"", "RedFlagged!!!! Check Closely"+¶,"")+¶
-+arrayrange(exportline(),1, 3,¬)+" | "+arrayrange(exportline(),4, 7,¬)+¶
++arrayrange(exportline(),1, 2,¬)+¶
++?(«Group»="","No Group",«Group»)+¶
++arrayrange(exportline(),4, 7,¬)+¶
 +arrayrange(exportline(),15, 16,¬)+¶
 +"Member: "+?(«Mem?»≠"",«Mem?»,"no")+"   Inquiry: "+?(«inqcode»≠"",inqcode,"none")+"   First order: "+«Code»+¶
 +¶
@@ -910,6 +912,7 @@ selectwithin striptoalpha(exportline())≠""
 if (not info("empty"))
 removeunselected
 endif
+
 ___ ENDPROCEDURE FindMostRecent ________________________________________________
 
 ___ PROCEDURE .ArchiveOldInfo __________________________________________________
@@ -1099,6 +1102,9 @@ ___ ENDPROCEDURE .MergeSingleToHistory _________________________________________
 ___ PROCEDURE ClearRecords/5 ___________________________________________________
 yesno "Ready to clear records in the Deduplicator?"
 
+if clipboard()≠"Yes"
+stop
+endif
 //___add a check to see if they've been merged and a yes
 //no to continue
 
@@ -1586,19 +1592,17 @@ TIN"
 fence_post1=arraysize(c_h_extras, ¶)
 
 
+extras_data=«Notes»+","+«2ndAdd»+","+«CChistory»+","+«Consent»+","+«Dup?»+","+«Email»+","+
+            str(«Equity»)+","+«Facil1»+","+«Facil2»+","+«NewMember»+","+«Notified»+","+
+            «OldMember»+","+«ProbCust»+","+«SpareText4»+","+«SpareText5»+","+«taxname»+","+«TIN»
 
 
-extras_data=«Notes»+¶+«2ndAdd»+¶+«CChistory»+¶+«Consent»+¶+«Dup?»+¶+«Email»+¶+
-            str(«Equity»)+¶+«Facil1»+¶+«Facil2»+¶+«NewMember»+¶+«Notified»+¶+
-            «OldMember»+¶+«ProbCust»+¶+«SpareText4»+¶+«SpareText5»+¶+«taxname»+¶+«TIN»
-
-;displaydata extras_data
 
 window "DeDuplicator"
 
 loop
 field (array(c_h_extras, extras_counter, ¶))
-«»=array(extras_data, extras_counter, ¶)
+«»=array(extras_data, extras_counter, ",")
 extras_counter=extras_counter+1
 until info("fieldname")="TIN"
 
