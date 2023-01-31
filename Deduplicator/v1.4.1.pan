@@ -938,7 +938,7 @@ if «2ndAdd» = ""
 else
     «2ndAdd»=«2ndAdd»+¶+«OldAddresses»
 endif
-debug
+
 
 //___Put the old Cnums in with the CCHistory in Customer History
 if «CChistory» = "" 
@@ -1225,9 +1225,22 @@ ___ ENDPROCEDURE .MergeHistory _________________________________________________
 
 ___ PROCEDURE .CodeTest ________________________________________________________
 
-if val(«»)≠0 or str(«»)≠""
-right
-endif
+global world_accents, world_a, world_A, world_c, world_C,
+world_E, world_e, world_I, world_i, world_N, world_n, world_O, world_o,
+world_U, world_u, world_odds
+world_accents=""
+world_a=""
+world_c=""
+
+world_a="Ä-Å-Ç-É-Ñ-Ö-Ü-á-à-â-ä-ã-å-ç-é-ê-ë-í-ì-î-ï-ñ-ó-ò-ô-ö-õ-ú-ù-û-ü-À-Ã-Õ-Â-Ê-Á-Ë-È-Í-Î-Ï-Ì-Ó-Ô-Ò-Ú-Û-Ù-ÿ-Ÿ-“-”-‘-’-ß-Æ-æ-Œ-œ"
+
+world_accents=""
+world_accents="À-Ä-Ã-Å-Â-Á-á-à-â-ä-ã-å-Ç-ç-É-Ê-Ë-È-é-è-ê-ë-Í-Î-Ï-Ì-í-ì-î-ï-Ñ-ñ-Ö-Õ-Ó-Ô-Ò-Ø-ó-ò-ô-ö-õ-ø-Ü-Ú-Û-Ù-ú-ù-û-ü-ß-Æ-æ-Œ-œ"
+
+world_accents=stripchar(replacemultiple(thetext,"Ä-Å-Ç-É-Ñ-Ö-Ü-á-à-â-ä-ã-å-ç-é-ê-ë-í-ì-î-ï-ñ-ó-ò-ô-ö-õ-ú-ù-û-ü-À-Ã-Õ-Â-Ê-Á-Ë-È-Í-Î-Ï-Ì-Ó-Ô-Ò-Ú-Û-Ù-ÿ-Ÿ-“-”-‘-’-ß-Æ-æ-Œ-œ-è-Ø-ø","A-A-C-E-N-O-U-a-a-a-a-a-a-c-e-e-e-i-i-i-i-n-o-o-o-o-o-u-u-u-u-A-A-O-A-E-A-E-E-I-I-I-I-O-O-O-U-U-U-y-Y-""-""-'-'-SS-AE-ae-OE-oe-e-OE-oe",
+                                  "-")," ~")
+                                  
+                                  displaydata world_accents
 ___ ENDPROCEDURE .CodeTest _____________________________________________________
 
 ___ PROCEDURE .MergeSummaryTo __________________________________________________

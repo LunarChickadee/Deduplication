@@ -906,20 +906,18 @@ address_main=MAd+¬+St+¬+str(pattern(val(Zip),"#####"))
 
 firstrecord
 select info("summary")<1
+
 loop 
-if MAd+¬+St+¬+str(pattern(val(Zip),"#####")) notcontains address_main
-old_addresses_array=MAd+¬+St+¬+str(pattern(val(Zip),"#####"))+¶+old_addresses_array
-endif
-if str(«C#») notcontains c_num_main
-old_cnum_array=str(«C#»)+¶+old_cnum_array
-endif
-if «IsDestinationRecord»≠"Yes"
-«MergedWith»=c_num_main
-endif
-
+    if MAd+¬+St+¬+str(pattern(val(Zip),"#####")) notcontains address_main
+        old_addresses_array=MAd+¬+St+¬+str(pattern(val(Zip),"#####"))+¶+old_addresses_array
+    endif
+    if str(«C#») notcontains c_num_main
+        old_cnum_array=str(«C#»)+¶+old_cnum_array
+    endif
+    if «IsDestinationRecord»≠"Yes"
+        «MergedWith»=c_num_main
+    endif
 downrecord
-
-
 until info("stopped")
 
 selectall
@@ -932,6 +930,13 @@ old_cnum_array=arraystrip(old_cnum_array, ¶)
 
 OldAddresses=old_addresses_array
 OldCNums=old_cnum_array
+
+//___Put the old address in with the 2nd addresses in Customer History
+if «2ndAdd» = "" 
+    «2ndAdd»=«OldAddresses»
+else
+    «2ndAdd»=«2ndAdd»+¶+«OldAddresses»
+endif
 
 field MergedOn
 formulafill datepattern(today(), "mm/dd/yy")
@@ -1307,6 +1312,22 @@ check_dest_num=arraystrip(check_dest_num, ¶)
         goto MultiMerge
     endif
 
+
+SingleMerge:
+Field Con
+loop
+find «IsAMergeRecord» = "Yes"
+    if val(«»)≠0 or str(«»)≠""
+        right
+    else
+        find IsDestinationRecord = "Yes" 
+            copy
+                lastrecord
+                    paste
+                        right
+    endif
+until info("stopped")
+/*
 Field Con
     loop
             if info("fieldname")=Code
@@ -1319,6 +1340,7 @@ Field Con
         right
     until info("stopped") or info("fieldname")="EntrySequence"
     goto MergeCustomerHistory
+*/
 
 
 MultiMerge:
