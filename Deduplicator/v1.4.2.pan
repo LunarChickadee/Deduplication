@@ -252,7 +252,19 @@ CreateMergeRecord:
     //__get lowest C# and Code (first order) __//
     field «C#»
     minimum
+    RepeatCnumCheck:
+    case val(«C#»)=0
+            SortUp
+            firstrecord
+                loop
+                    downrecord
+                until val(«C#»)>0
+                goto RepeatCnumCheck
+    defaultcase
     lowest_Cust_Num=«»
+        lastrecord
+        «»=lowest_Cust_Num
+    endcase
 
 
 lowest_code=""
@@ -597,6 +609,7 @@ ___ ENDPROCEDURE .UserChoice ___________________________________________________
 ___ PROCEDURE FindMostRecent ___________________________________________________
 //___this is a lot of code to do somethign that feels simple___//
 global Dedup_form, Branch_with_most_recent, Field_Nums_Array, most_recent_year,reference_num,
+    has_consent,
     seed_dict, new_ogs_dict, old_ogs_dict, bulbs_dict, trees_dict, default_seeds, default_trees, 
     default_ogs, default_moose, default_bulbs, any_cust_window,
     Seeds_History, Recent_Seeds, Last_Seeds, Seeds_Fields,Field_Seeds, Seeds_Num, Seeds_Sales,
@@ -966,8 +979,6 @@ openfile "Deduplicator"
 downrecord
 until info("stopped")
 
-message "Archived!"
-
 selectall
 
 ___ ENDPROCEDURE .ArchiveOldInfo _______________________________________________
@@ -1095,7 +1106,7 @@ deleteall
 
 call .BuildChoiceList
 
-window back_to_ML
+window mailing_list_window
 
 
 ___ ENDPROCEDURE ClearRecords/5 ________________________________________________
@@ -1594,6 +1605,10 @@ ___ ENDPROCEDURE .ExtraFieldsCH ________________________________________________
 ___ PROCEDURE .MergeCustHist ___________________________________________________
 
 call .LineItemMerge
+
+call .BuildFieldArray
+
+
 
 
 
